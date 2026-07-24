@@ -208,27 +208,7 @@ Every API request follows a predictable processing pipeline.
 ```mermaid
 flowchart TD
 
-A[Client Request]
-
--->B[Nginx]
-
--->C[Rate Limiting]
-
--->D[FastAPI Router]
-
--->E[Pydantic Validation]
-
--->F[JWT Authentication]
-
--->G[RBAC Authorization]
-
--->H[Business Logic]
-
--->I[SQLAlchemy ORM]
-
--->J[(PostgreSQL)]
-
--->K[JSON Response]
+A[Client Request] -->B[Nginx] -->C[Rate Limiting] -->D[FastAPI Router] -->E[Pydantic Validation] -->F[JWT Authentication] -->G[RBAC Authorization] -->H[Business Logic] -->I[SQLAlchemy ORM] -->J[(PostgreSQL)] -->K[JSON Response]
 ```
 
 Each stage has a dedicated responsibility.
@@ -470,19 +450,7 @@ Once authenticated, every request follows a secure verification path.
 ```mermaid
 flowchart TD
 
-A[Login]
-
--->B[JWT Issued]
-
--->C[Protected Request]
-
--->D[JWT Validation]
-
--->E[Role Verification]
-
--->F[Business Logic]
-
--->G[Database]
+A[Login] -->B[JWT Issued] -->C[Protected Request] -->D[JWT Validation] -->E[Role Verification] -->F[Business Logic] -->G[Database]
 
 JWTExpired{JWT Expired?}
 
@@ -556,23 +524,13 @@ Permissions
 ```mermaid
 flowchart LR
 
-User
+User -->JWT -->Role
 
--->JWT
+Role -->Student
 
--->Role
+Role -->Teacher
 
-Role
-
--->Student
-
-Role
-
--->Teacher
-
-Role
-
--->Admin
+Role -->Admin
 
 Student --> Attendance
 
@@ -737,25 +695,7 @@ Every attendance request passes through a controlled validation pipeline before 
 ```mermaid
 flowchart TD
 
-A[👨🏫 Teacher Creates Session]
-
--->B[🔐 Generate TOTP Secret]
-
--->C[🔒 Encrypt Secret]
-
--->D[(PostgreSQL)]
-
--->E[📱 QR Generated]
-
--->F[👨🎓 Student Scans QR]
-
--->G[⚡ POST /scan]
-
--->H[✅ Validation Pipeline]
-
--->I[(Attendance Log)]
-
--->J[🎉 Attendance Successful]
+A[👨🏫 Teacher Creates Session] -->B[🔐 Generate TOTP Secret] -->C[🔒 Encrypt Secret] -->D[(PostgreSQL)] -->E[📱 QR Generated] -->F[👨🎓 Student Scans QR] -->G[⚡ POST /scan] -->H[✅ Validation Pipeline] -->I[(Attendance Log)] -->J[🎉 Attendance Successful]
 ```
 
 ---
@@ -923,9 +863,7 @@ This is the heart of the Attendance Engine.
 ```mermaid
 flowchart TD
 
-A[Attendance Request]
-
--->B[JWT Valid?]
+A[Attendance Request] -->B[JWT Valid?]
 
 B -->|No| X1[Reject]
 
@@ -1108,45 +1046,25 @@ Instead of storing isolated documents, the system models the academic environmen
 ```mermaid
 flowchart TD
 
-Users
+Users -->Students
 
--->Students
+Users -->Teachers
 
-Users
+Departments -->Students
 
--->Teachers
+Departments -->Teachers
 
-Departments
+Teachers -->Courses
 
--->Students
+Courses -->Class Sessions
 
-Departments
+Students -->Attendance Logs
 
--->Teachers
+Class Sessions -->Attendance Logs
 
-Teachers
+Students -->Device Registrations
 
--->Courses
-
-Courses
-
--->Class Sessions
-
-Students
-
--->Attendance Logs
-
-Class Sessions
-
--->Attendance Logs
-
-Students
-
--->Device Registrations
-
-Users
-
--->Refresh Tokens
+Users -->Refresh Tokens
 ```
 
 ---
@@ -1599,19 +1517,7 @@ Duplicate attendance records are prevented through a composite uniqueness constr
 ```mermaid
 flowchart LR
 
-Student
-
--->Attendance API
-
--->SQLAlchemy
-
--->PostgreSQL
-
--->Attendance Log
-
--->Reports
-
--->Dashboard
+Student -->Attendance API -->SQLAlchemy -->PostgreSQL -->Attendance Log -->Reports -->Dashboard
 ```
 
 ---
@@ -1665,31 +1571,17 @@ Rather than placing all functionality into a single controller, the API is divid
 ```mermaid
 flowchart TD
 
-Client[📱 Client / PWA]
+Client[📱 Client / PWA] -->Nginx[Nginx Reverse Proxy] -->FastAPI
 
--->Nginx[Nginx Reverse Proxy]
+FastAPI -->Auth["🔐 Authentication"]
 
--->FastAPI
+FastAPI -->Attendance["📖 Attendance"]
 
-FastAPI
+FastAPI -->Admin["👨💼 Administration"]
 
--->Auth["🔐 Authentication"]
+FastAPI -->Reports["📊 Reports"]
 
-FastAPI
-
--->Attendance["📖 Attendance"]
-
-FastAPI
-
--->Admin["👨💼 Administration"]
-
-FastAPI
-
--->Reports["📊 Reports"]
-
-FastAPI
-
--->Health["❤️ Health"]
+FastAPI -->Health["❤️ Health"]
 
 Auth --> PostgreSQL[(PostgreSQL)]
 
@@ -2055,33 +1947,19 @@ Rather than installing databases, web servers, and Python dependencies manually,
 ```mermaid
 flowchart TD
 
-Developer
+Developer -->DockerCompose["🐳 Docker Compose"]
 
--->DockerCompose["🐳 Docker Compose"]
+DockerCompose -->Nginx["🌐 Nginx"]
 
-DockerCompose
+DockerCompose -->FastAPI["⚡ FastAPI"]
 
--->Nginx["🌐 Nginx"]
+DockerCompose -->PostgreSQL["🐘 PostgreSQL"]
 
-DockerCompose
+Browser -->Nginx
 
--->FastAPI["⚡ FastAPI"]
+Nginx -->FastAPI
 
-DockerCompose
-
--->PostgreSQL["🐘 PostgreSQL"]
-
-Browser
-
--->Nginx
-
-Nginx
-
--->FastAPI
-
-FastAPI
-
--->PostgreSQL
+FastAPI -->PostgreSQL
 ```
 
 ---
@@ -2293,15 +2171,7 @@ knmiet-connect/
 ```mermaid
 flowchart LR
 
-Clone
-
--->ConfigureENV
-
--->DockerCompose
-
--->ContainersStart
-
--->ApplicationReady
+Clone -->ConfigureENV -->DockerCompose -->ContainersStart -->ApplicationReady
 ```
 
 ---
