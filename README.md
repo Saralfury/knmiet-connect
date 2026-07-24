@@ -340,9 +340,9 @@ It manages:
 - Courses
 - Enrollments
 - Attendance Sessions
-- Attendance Logs
-- Refresh Tokens
-- Device Registrations
+- Attendance_Logs
+- Refresh_Tokens
+- Device_Registrations
 - Audit Tables
 
 Strong relational constraints help maintain data consistency while preventing duplicate attendance records and invalid relationships.
@@ -695,7 +695,7 @@ Every attendance request passes through a controlled validation pipeline before 
 ```mermaid
 flowchart TD
 
-A[👨🏫 Teacher Creates Session] -->B[🔐 Generate TOTP Secret] -->C[🔒 Encrypt Secret] -->D[(PostgreSQL)] -->E[📱 QR Generated] -->F[👨🎓 Student Scans QR] -->G[⚡ POST /scan] -->H[✅ Validation Pipeline] -->I[(Attendance Log)] -->J[🎉 Attendance Successful]
+A[👨🏫 Teacher Creates Session] -->B[🔐 Generate TOTP Secret] -->C[🔒 Encrypt Secret] -->D[(PostgreSQL)] -->E[📱 QR Generated] -->F[👨🎓 Student Scans QR] -->G[⚡ POST /scan] -->H[✅ Validation Pipeline] -->I[(Attendance_Log)] -->J[🎉 Attendance Successful]
 ```
 
 ---
@@ -1056,15 +1056,15 @@ Departments -->Teachers
 
 Teachers -->Courses
 
-Courses -->Class Sessions
+Courses -->Class_Sessions
 
-Students -->Attendance Logs
+Students -->Attendance_Logs
 
-Class Sessions -->Attendance Logs
+Class_Sessions -->Attendance_Logs
 
-Students -->Device Registrations
+Students -->Device_Registrations
 
-Users -->Refresh Tokens
+Users -->Refresh_Tokens
 ```
 
 ---
@@ -1185,7 +1185,7 @@ University
 
              ▼
 
-      Attendance Logs
+      Attendance_Logs
 ```
 
 ---
@@ -1302,7 +1302,7 @@ Course
 
 ---
 
-# 🕒 Class Sessions
+# 🕒 Class_Sessions
 
 A session represents one active lecture.
 
@@ -1334,7 +1334,7 @@ Every attendance scan belongs to exactly one session.
 
 ---
 
-# 📝 Attendance Logs
+# 📝 Attendance_Logs
 
 Attendance logs are the permanent academic record.
 
@@ -1418,7 +1418,7 @@ Continue
 
 ---
 
-# 🔄 Refresh Tokens
+# 🔄 Refresh_Tokens
 
 Refresh tokens extend authenticated sessions.
 
@@ -1459,7 +1459,7 @@ Users
 
 │       │
 
-│       ├──── Attendance Logs
+│       ├──── Attendance_Logs
 
 │       │
 
@@ -1471,13 +1471,13 @@ Users
 
         │
 
-        └──── Class Sessions
+        └──── Class_Sessions
 
                 │
 
                 ▼
 
-        Attendance Logs
+        Attendance_Logs
 ```
 
 ---
@@ -1517,7 +1517,7 @@ Duplicate attendance records are prevented through a composite uniqueness constr
 ```mermaid
 flowchart LR
 
-Student -->Attendance API -->SQLAlchemy -->PostgreSQL -->Attendance Log -->Reports -->Dashboard
+Student -->Attendance_API -->SQLAlchemy -->PostgreSQL -->Attendance_Log -->Reports -->Dashboard
 ```
 
 ---
@@ -1546,10 +1546,10 @@ The schema follows classic relational design principles.
 | 👨🏫 Teachers | Session ownership |
 | 🏫 Departments | Academic organization |
 | 📚 Courses | Subject management |
-| 🕒 Class Sessions | Attendance windows |
-| 📝 Attendance Logs | Permanent attendance records |
-| 📱 Device Registrations | Device ownership verification |
-| 🔄 Refresh Tokens | Secure session continuation |
+| 🕒 Class_Sessions | Attendance windows |
+| 📝 Attendance_Logs | Permanent attendance records |
+| 📱 Device_Registrations | Device ownership verification |
+| 🔄 Refresh_Tokens | Secure session continuation |
 | 📖 Audit Tables | Database change history |
 
 ---
@@ -1665,7 +1665,7 @@ Authentication endpoints are responsible only for identity verification and toke
 
 ---
 
-# 👨🎓 Attendance API
+# 👨🎓 Attendance_API
 
 The Attendance module powers the core functionality of the platform.
 
@@ -1720,7 +1720,7 @@ Administrator
 Reporting endpoints provide institutional insights.
 
 ```
-Attendance Logs
+Attendance_Logs
 
 ↓
 
@@ -2094,7 +2094,7 @@ Sessions
 
 Attendance
 
-Refresh Tokens
+Refresh_Tokens
 
 Devices
 
