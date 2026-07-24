@@ -1,0 +1,523 @@
+
+--- frontend\app.js ---
+const authStatus = document.querySelector("#authStatus");
+const scanStatus = document.querySelector("#scanStatus");
+const userTitle = document.querySelector("#userTitle");
+const attendanceRows = document.querySelector("#attendanceRows");
+const qrBox = document.querySelector("#qrBox");
+
+let currentUser = null;
+
+function readCookie(name) {
+  const prefix = `${encodeURIComponent(name)}=`;
+  const cookie = document.cookie.split("; ").find((item) => item.startsWith(prefix));
+  return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : null;
+}
+
+async function api(path, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+    const csrfToken = readCookie("csrf_token");
+    if (csrfToken) {
+      headers["X-CSRF-Token"] = csrfToken;
+    }
+  }
+  const response = await fetch(`/api${path}`, {
+    credentials: "include",
+    ...options,
+    headers,
+  });
+  const contentType = response.headers.get("content-type") || "";
+  const data = contentType.includes("application/json") ? await response.json() : await response.text();
+  if (!response.ok) {
+    throw new Error(data.detail || data.message || "Request failed");
+  }
+  return data;
+}
+
+document.querySelector("#loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  authStatus.textContent = "Signing in...";
+  try {
+    currentUser = await api("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({
+        email: document.querySelector("#email").value,
+        password: document.querySelector("#password").value,
+      }),
+    });
+    userTitle.textContent = `${currentUser.name} (${currentUser.role})`;
+    authStatus.textContent = "Signed in";
+    await loadAttendance();
+  } catch (error) {
+    authStatus.textContent = error.message;
+  }
+});
+
+document.querySelector("#logoutBtn").addEventListener("click", async () => {
+  await api("/auth/logout", { method: "POST" });
+  currentUser = null;
+  userTitle.textContent = "Not signed in";
+  attendanceRows.replaceChildren();
+});
+
+document.querySelector("#registerDeviceBtn").addEventListener("click", async () => {
+  scanStatus.textContent = "Registering device...";
+  try {
+    const result = await api("/attendance/devices/register", { method: "POST" });
+    scanStatus.textContent = result.message;
+  } catch (error) {
+    scanStatus.textContent = error.message;
+  }
+});
+
+document.querySelector("#scanForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  scanStatus.textContent = "Submitting scan...";
+  try {
+    const result = await api("/attendance/scan", {
+      method: "POST",
+      body: JSON.stringify({
+        session_id: document.querySelector("#sessionId").value,
+        token: document.querySelector("#totpToken").value,
+      }),
+    });
+    scanStatus.textContent = result.message;
+    await loadAttendance();
+  } catch (error) {
+    scanStatus.textContent = error.message;
+  }
+});
+
+document.querySelector("#sessionForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  qrBox.textContent = "Starting session...";
+  try {
+    const result = await api("/attendance/sessions", {
+      method: "POST",
+      body: JSON.stringify({ course_id: document.querySelector("#courseId").value }),
+    });
+    qrBox.textContent = `${result.session_id}\n${result.qr_payload}`;
+  } catch (error) {
+    qrBox.textContent = error.message;
+  }
+});
+
+document.querySelector("#refreshAttendanceBtn").addEventListener("click", loadAttendance);
+
+async function loadAttendance() {
+  try {
+    const rows = await api("/attendance/me");
+    const tableRows = rows.map((row) => {
+      const tableRow = document.createElement("tr");
+      const values = [
+        `${row.course_code} - ${row.course_name}`,
+        row.attended,
+        row.total_sessions,
+        row.percentage,
+      ];
+      values.forEach((value) => {
+        const cell = document.createElement("td");
+        cell.textContent = String(value);
+        tableRow.appendChild(cell);
+      });
+      return tableRow;
+    });
+    attendanceRows.replaceChildren(...tableRows);
+  } catch {
+    attendanceRows.replaceChildren();
+  }
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js");
+}
+
+--- frontend\index.html ---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f766e" />
+    <title>KNMIET Connect</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="panel auth-panel">
+        <div>
+          <p class="eyebrow">KNMIET Connect</p>
+          <h1>Attendance Console</h1>
+        </div>
+        <form id="loginForm" class="stack">
+          <input id="email" type="email" placeholder="Email" autocomplete="email" required />
+          <input id="password" type="password" placeholder="Password" autocomplete="current-password" required />
+          <button type="submit">Sign in</button>
+        </form>
+        <p id="authStatus" class="status"></p>
+      </section>
+
+      <section class="workspace">
+        <div class="toolbar">
+          <div>
+            <p class="eyebrow">Live Tools</p>
+            <h2 id="userTitle">Not signed in</h2>
+          </div>
+          <button id="logoutBtn" class="secondary">Logout</button>
+        </div>
+
+        <div class="grid">
+          <section class="panel">
+            <h3>Student Scan</h3>
+            <button id="registerDeviceBtn" class="secondary">Register Device</button>
+            <form id="scanForm" class="stack">
+              <input id="sessionId" placeholder="Session UUID" required />
+              <input id="totpToken" placeholder="6-digit token" required />
+              <button type="submit">Mark Attendance</button>
+            </form>
+            <p id="scanStatus" class="status"></p>
+          </section>
+
+          <section class="panel">
+            <h3>Teacher Session</h3>
+            <form id="sessionForm" class="stack">
+              <input id="courseId" placeholder="Course UUID" required />
+              <button type="submit">Start Session</button>
+            </form>
+            <div id="qrBox" class="qr-box"></div>
+          </section>
+
+          <section class="panel wide">
+            <div class="toolbar compact">
+              <h3>My Attendance</h3>
+              <button id="refreshAttendanceBtn" class="secondary">Refresh</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Course</th>
+                  <th>Attended</th>
+                  <th>Total</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceRows"></tbody>
+            </table>
+          </section>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
+
+--- frontend\manifest.json ---
+{
+  "name": "KNMIET Connect",
+  "short_name": "KNMIET",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f7f4",
+  "theme_color": "#0f766e",
+  "icons": []
+}
+
+--- frontend\service-worker.js ---
+const STATIC_CACHE = "knmiet-connect-static-v1";
+const STATIC_ASSETS = ["/", "/index.html", "/styles.css", "/app.js", "/manifest.json"];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS)));
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((cacheName) => cacheName !== STATIC_CACHE)
+          .map((cacheName) => caches.delete(cacheName)),
+      );
+    }).then(() => self.clients.claim()),
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  if (event.request.method !== "GET" || url.origin !== self.location.origin) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      return cached || fetch(event.request).then((response) => {
+        if (response.ok && response.type !== "opaque") {
+          const copy = response.clone();
+          caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, copy));
+        }
+        return response;
+      });
+    }),
+  );
+});
+
+--- frontend\styles.css ---
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f6f7f4;
+  color: #1d2730;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  min-height: 100vh;
+}
+
+.auth-panel {
+  border-radius: 0;
+  border-right: 1px solid #d6ddd6;
+  background: #ffffff;
+}
+
+.workspace {
+  padding: 32px;
+}
+
+.panel {
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #d8dfd8;
+  border-radius: 8px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.compact {
+  margin-bottom: 16px;
+}
+
+.stack {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.15;
+}
+
+h1 {
+  font-size: 34px;
+}
+
+h2 {
+  font-size: 26px;
+}
+
+h3 {
+  font-size: 18px;
+}
+
+input,
+button {
+  min-height: 44px;
+  border-radius: 6px;
+  font: inherit;
+}
+
+input {
+  width: 100%;
+  border: 1px solid #c8d0c8;
+  padding: 0 12px;
+  background: #fbfcfb;
+}
+
+button {
+  border: 0;
+  padding: 0 16px;
+  background: #0f766e;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button.secondary {
+  border: 1px solid #b9c5bd;
+  background: #ffffff;
+  color: #243136;
+}
+
+.status {
+  min-height: 22px;
+  color: #415059;
+}
+
+.qr-box {
+  margin-top: 16px;
+  padding: 16px;
+  min-height: 92px;
+  border: 1px dashed #a9b6ad;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px;
+  border-bottom: 1px solid #e2e7e2;
+  text-align: left;
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-panel {
+    border-right: 0;
+    border-bottom: 1px solid #d6ddd6;
+  }
+
+  .workspace {
+    padding: 18px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+--- frontend\tests\service-worker.test.js ---
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
+
+const listeners = {};
+const deletedCaches = [];
+const cachedRequests = [];
+let responseFactory = () => ({ ok: true, type: "basic", clone() { return this; } });
+
+const context = {
+  URL,
+  Promise,
+  self: {
+    location: { origin: "https://attendance.example.edu" },
+    clients: { claim: async () => undefined },
+    skipWaiting() {},
+    addEventListener(type, listener) { listeners[type] = listener; },
+  },
+  caches: {
+    async keys() { return ["knmiet-connect-static-v0", "knmiet-connect-static-v1", "unrelated-cache"]; },
+    async delete(name) { deletedCaches.push(name); return true; },
+    async match() { return undefined; },
+    async open() {
+      return {
+        async addAll() {},
+        async put(request) { cachedRequests.push(request.url); },
+      };
+    },
+  },
+  fetch: async () => responseFactory(),
+};
+
+const source = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
+vm.runInNewContext(source, context, { filename: "service-worker.js" });
+
+async function activate() {
+  let pending;
+  listeners.activate({ waitUntil(promise) { pending = promise; } });
+  await pending;
+}
+
+async function dispatchFetch(url, method = "GET") {
+  let pending;
+  listeners.fetch({
+    request: { url, method },
+    respondWith(promise) { pending = promise; },
+  });
+  await pending;
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+(async () => {
+  await activate();
+  assert.deepEqual(
+    deletedCaches.sort(),
+    ["knmiet-connect-static-v0", "unrelated-cache"],
+    "activation must evict every stale cache",
+  );
+
+  await dispatchFetch("https://attendance.example.edu/styles.css");
+  assert.deepEqual(cachedRequests, ["https://attendance.example.edu/styles.css"]);
+
+  await dispatchFetch("https://attendance.example.edu/submit", "POST");
+  await dispatchFetch("https://cdn.example.edu/image.png");
+  responseFactory = () => ({ ok: false, type: "basic", clone() { return this; } });
+  await dispatchFetch("https://attendance.example.edu/missing.css");
+  responseFactory = () => ({ ok: true, type: "opaque", clone() { return this; } });
+  await dispatchFetch("https://attendance.example.edu/opaque.css");
+
+  assert.deepEqual(
+    cachedRequests,
+    ["https://attendance.example.edu/styles.css"],
+    "only successful same-origin GET responses may be cached",
+  );
+  console.log("service-worker-cache-lifecycle-ok");
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f766e" />
+    <title>KNMIET Connect</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="panel auth-panel">
+        <div>
+          <p class="eyebrow">KNMIET Connect</p>
+          <h1>Attendance Console</h1>
+        </div>
+        <form id="loginForm" class="stack">
+          <input id="email" type="email" placeholder="Email" autocomplete="email" required />
+          <input id="password" type="password" placeholder="Password" autocomplete="current-password" required />
+          <button type="submit">Sign in</button>
+        </form>
+        <p id="authStatus" class="status"></p>
+      </section>
+
+      <section class="workspace">
+        <div class="toolbar">
+          <div>
+            <p class="eyebrow">Live Tools</p>
+            <h2 id="userTitle">Not signed in</h2>
+          </div>
+          <button id="logoutBtn" class="secondary">Logout</button>
+        </div>
+
+        <div class="grid">
+          <section class="panel">
+            <h3>Student Scan</h3>
+            <button id="registerDeviceBtn" class="secondary">Register Device</button>
+            <form id="scanForm" class="stack">
+              <input id="sessionId" placeholder="Session UUID" required />
+              <input id="totpToken" placeholder="6-digit token" required />
+              <button type="submit">Mark Attendance</button>
+            </form>
+            <p id="scanStatus" class="status"></p>
+          </section>
+
+          <section class="panel">
+            <h3>Teacher Session</h3>
+            <form id="sessionForm" class="stack">
+              <input id="courseId" placeholder="Course UUID" required />
+              <button type="submit">Start Session</button>
+            </form>
+            <div id="qrBox" class="qr-box"></div>
+          </section>
+
+          <section class="panel wide">
+            <div class="toolbar compact">
+              <h3>My Attendance</h3>
+              <button id="refreshAttendanceBtn" class="secondary">Refresh</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Course</th>
+                  <th>Attended</th>
+                  <th>Total</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceRows"></tbody>
+            </table>
+          </section>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
