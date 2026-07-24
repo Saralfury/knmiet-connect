@@ -724,7 +724,7 @@ An attacker would need to bypass every validation stage, not just one, before an
 
 The Attendance Engine is the core of KNMIET Connect.
 
-Its responsibility is simple:
+Responsibilities:
 
 > Ensure that only an authenticated, authorized, enrolled student using a registered device can successfully mark attendance during an active class session.
 
@@ -858,21 +858,13 @@ Instead, the backend continuously generates a rotating QR code.
 
 ```text
 Encrypted Secret
-
 ↓
-
 Current Timestamp
-
 ↓
-
 Generate TOTP
-
 ↓
-
 Encode QR
-
 ↓
-
 Display on Teacher Screen
 ```
 
@@ -888,25 +880,15 @@ Student workflow
 
 ```text
 Open PWA
-
 ↓
-
 Login
-
 ↓
-
 Open Scanner
-
 ↓
-
 Scan QR
-
 ↓
-
 POST /scan
-
 ↓
-
 Wait for Verification
 ```
 
@@ -980,25 +962,15 @@ Once validation completes, the backend performs a database transaction.
 
 ```text
 Attendance Request
-
 ↓
-
 SQLAlchemy
-
 ↓
-
 Transaction Starts
-
 ↓
-
 Insert attendance_logs
-
 ↓
-
 Commit
-
 ↓
-
 Success Response
 ```
 
@@ -1006,9 +978,7 @@ If any validation fails before the transaction completes,
 
 ```
 Rollback
-
 ↓
-
 Error Response
 ```
 
@@ -1047,29 +1017,17 @@ KNMIET Connect validates multiple independent conditions.
 
 ```text
 Identity
-
 +
-
 Authorization
-
 +
-
 Registered Device
-
 +
-
 Enrollment
-
 +
-
 Active Session
-
 +
-
 Valid TOTP
-
 =
-
 Attendance
 ```
 
@@ -1240,9 +1198,7 @@ USERS ||--o{ REFRESH_TOKENS : stores
 
 ```text
 University
-
 │
-
 ├──────── Departments
 
 │          │
@@ -1252,9 +1208,7 @@ University
 │          │
 
 │          └──── Students
-
 │
-
 └──────── Courses
 
              │
@@ -1280,9 +1234,7 @@ Every authenticated account begins here.
 
 ```text
 Users
-
 │
-
 ├── Student
 
 ├── Teacher
@@ -1307,25 +1259,15 @@ Contains academic information.
 
 ```
 Student
-
 ↓
-
 Department
-
 ↓
-
 Semester
-
 ↓
-
 Roll Number
-
 ↓
-
 Registered Device
-
 ↓
-
 Attendance History
 ```
 
@@ -1344,21 +1286,13 @@ Teachers own attendance sessions.
 
 ```text
 Teacher
-
 ↓
-
 Assigned Courses
-
 ↓
-
 Create Sessions
-
 ↓
-
 Generate QR
-
 ↓
-
 View Attendance
 ```
 
@@ -1370,9 +1304,7 @@ Each course becomes the parent of multiple attendance sessions.
 
 ```text
 Course
-
 │
-
 ├── Session 1
 
 ├── Session 2
@@ -1390,25 +1322,15 @@ A session represents one active lecture.
 
 ```
 Teacher
-
 ↓
-
 Create Session
-
 ↓
-
 Encrypted Secret
-
 ↓
-
 Start Time
-
 ↓
-
 End Time
-
 ↓
-
 Active QR
 ```
 
@@ -1422,21 +1344,13 @@ Attendance logs are the permanent academic record.
 
 ```text
 Student
-
 +
-
 Session
-
 ↓
-
 Attendance Record
-
 ↓
-
 Timestamp
-
 ↓
-
 Stored
 ```
 
@@ -1458,21 +1372,13 @@ Every student owns one registered device.
 
 ```text
 Student
-
 ↓
-
 Register Device
-
 ↓
-
 Generate Hash
-
 ↓
-
 Store
-
 ↓
-
 Future Verification
 ```
 
@@ -1480,21 +1386,13 @@ During attendance,
 
 ```
 Attendance Request
-
 ↓
-
 Device Hash
-
 ↓
-
 Compare
-
 ↓
-
 Match?
-
 ↓
-
 Continue
 ```
 
@@ -1506,25 +1404,15 @@ Refresh tokens extend authenticated sessions.
 
 ```text
 Login
-
 ↓
-
 Issue Refresh Token
-
 ↓
-
 Hash
-
 ↓
-
 Store
-
 ↓
-
 Rotate
-
 ↓
-
 Expire
 ```
 
@@ -1546,9 +1434,7 @@ Users
 │       │
 
 │       └──── Device Registration
-
 │
-
 └──── Teachers
 
         │
@@ -1572,21 +1458,13 @@ Examples include
 
 ```
 Student must exist
-
 ↓
-
 Teacher must exist
-
 ↓
-
 Course must exist
-
 ↓
-
 Session must exist
-
 ↓
-
 Attendance may be inserted
 ```
 
@@ -1796,9 +1674,7 @@ Administrative endpoints manage institutional data.
 
 ```text
 Administrator
-
 │
-
 ├── Users
 
 ├── Departments
@@ -1829,17 +1705,11 @@ Reporting endpoints provide institutional insights.
 
 ```
 Attendance Logs
-
 ↓
-
 Aggregate Data
-
 ↓
-
 Generate CSV
-
 ↓
-
 Download
 ```
 
@@ -1857,17 +1727,11 @@ Infrastructure monitoring endpoints.
 
 ```
 Docker
-
 ↓
-
 Health Endpoint
-
 ↓
-
 Application Status
-
 ↓
-
 Ready
 ```
 
@@ -1965,33 +1829,19 @@ Before any endpoint executes, the request travels through multiple middleware la
 
 ```text
 Incoming Request
-
 ↓
-
 CORS
-
 ↓
-
 Request Validation
-
 ↓
-
 JWT Authentication
-
 ↓
-
 Role Verification
-
 ↓
-
 Business Logic
-
 ↓
-
 Database
-
 ↓
-
 JSON Response
 ```
 
@@ -2016,21 +1866,13 @@ This consistent pipeline keeps endpoint implementations focused on business logi
 
 ```text
 Authentication
-
 ↓
-
 Attendance
-
 ↓
-
 Administration
-
 ↓
-
 Reporting
-
 ↓
-
 Health Monitoring
 ```
 
@@ -2134,17 +1976,13 @@ Nginx acts as the single public entry point.
 
 ```text
 Browser
-
 ↓
-
 Nginx
 
 ├──── Static Files
 
 └──── /api
-
 ↓
-
 FastAPI
 ```
 
@@ -2166,25 +2004,15 @@ The application server is responsible for executing all business logic.
 
 ```text
 Incoming Request
-
 ↓
-
 Authentication
-
 ↓
-
 Validation
-
 ↓
-
 Attendance Engine
-
 ↓
-
 Database Access
-
 ↓
-
 JSON Response
 ```
 
@@ -2360,29 +2188,17 @@ PostgreSQL
 
 ```text
 Browser
-
 ↓
-
 Port 8080
-
 ↓
-
 Nginx
-
 ↓
-
 Internal Docker Network
-
 ↓
-
 FastAPI
-
 ↓
-
 Internal Docker Network
-
 ↓
-
 PostgreSQL
 ```
 
@@ -2443,17 +2259,11 @@ The current audit notes that enabling HTTPS and improving bulk CSV processing ar
 
 ```text
 Same Environment
-
 ↓
-
 Same Dependencies
-
 ↓
-
 Same Containers
-
 ↓
-
 Runs Everywhere
 ```
 
@@ -2477,21 +2287,13 @@ The architecture prioritizes **clarity, maintainability, security, and predictab
 
 ```text
 Simple
-
 ↓
-
 Secure
-
 ↓
-
 Maintainable
-
 ↓
-
 Scalable
-
 ↓
-
 Reliable
 ```
 
@@ -2503,21 +2305,13 @@ Instead of building a distributed system with dozens of services, KNMIET Connect
 
 ```text
 HTTP Request
-
 ↓
-
 Async FastAPI
-
 ↓
-
 Business Logic
-
 ↓
-
 Database
-
 ↓
-
 JSON Response
 ```
 
@@ -2529,7 +2323,7 @@ JSON Response
 | 📄 Automatic OpenAPI Docs | Built-in API documentation |
 | 🧩 Dependency Injection | Clean authentication and authorization |
 | ✅ Pydantic Validation | Strong request validation |
-| 🚀 High Performance | Excellent throughput with minimal overhead |
+| 🚀 Optimized I/O | Excellent throughput with minimal overhead |
 
 FastAPI provides a lightweight yet powerful foundation for backend APIs while keeping the codebase organized.
 
@@ -2541,21 +2335,13 @@ Attendance data is highly relational.
 
 ```text
 Students
-
 ↓
-
 Courses
-
 ↓
-
 Sessions
-
 ↓
-
 Attendance
-
 ↓
-
 Reports
 ```
 
@@ -2575,17 +2361,11 @@ A relational database naturally models these relationships.
 
 ```text
 Python Objects
-
 ↓
-
 SQLAlchemy ORM
-
 ↓
-
 SQL Queries
-
 ↓
-
 PostgreSQL
 ```
 
@@ -2603,17 +2383,11 @@ Benefits
 
 ```text
 Developer A
-
 ↓
-
 Docker
-
 ↓
-
 Same Environment
-
 ↓
-
 Developer B
 ```
 
@@ -2636,13 +2410,9 @@ Nginx acts as the application's gateway.
 
 ```text
 Internet
-
 ↓
-
 Nginx
-
 ↓
-
 FastAPI
 ```
 
@@ -2672,17 +2442,11 @@ the project uses a Progressive Web App.
 
 ```text
 Browser
-
 ↓
-
 Install
-
 ↓
-
 Offline Assets
-
 ↓
-
 Native-like Experience
 ```
 
@@ -2700,21 +2464,13 @@ Advantages
 
 ```text
 Single Responsibility
-
 ↓
-
 Loose Coupling
-
 ↓
-
 High Cohesion
-
 ↓
-
 Layer Separation
-
 ↓
-
 Dependency Isolation
 ```
 
@@ -2737,33 +2493,19 @@ the backend validates every important action.
 
 ```text
 Request
-
 ↓
-
 Authenticate
-
 ↓
-
 Authorize
-
 ↓
-
 Validate
-
 ↓
-
 Verify Device
-
 ↓
-
 Verify Session
-
 ↓
-
 Verify TOTP
-
 ↓
-
 Store
 ```
 
@@ -2777,35 +2519,23 @@ Current architecture
 
 ```text
 PWA
-
 ↓
-
 Nginx
-
 ↓
-
 FastAPI
-
 ↓
-
 PostgreSQL
 ```
 
-Future growth can be achieved by
+Scalability considerations:
 
 ```
 Load Balancer
-
 ↓
-
 Multiple FastAPI Instances
-
 ↓
-
 Shared PostgreSQL
-
 ↓
-
 Caching Layer
 ```
 
@@ -2834,25 +2564,15 @@ These are acknowledged improvements rather than hidden shortcomings, reflecting 
 
 ```text
 Current
-
 ↓
-
 HTTPS
-
 ↓
-
 Password Reset
-
 ↓
-
 Async CSV Processing
-
 ↓
-
 Monitoring
-
 ↓
-
 Cloud Deployment
 ```
 
