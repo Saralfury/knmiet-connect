@@ -51,3 +51,6 @@ readme.txt
 # OS
 .DS_Store
 Thumbs.db
+
+test_env/
+backend/test_env/
